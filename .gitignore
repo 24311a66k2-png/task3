@@ -1,0 +1,28 @@
+# Operating System Files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor & IDE Directories
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Environment & Server Configs
+.env
+.env.local
+*.log
+
+# Uploaded runtime user files (preserve directory structure)
+uploads/profiles/*
+!uploads/profiles/.gitkeep
+!uploads/profiles/default-avatar.svg
+!uploads/profiles/default-avatar.png
+
+# Build & Dependency Directories
+node_modules/
+vendor/
