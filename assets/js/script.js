@@ -146,4 +146,101 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   });
+
+  // 6. Live AJAX Search for Admin User Table (Progressive Enhancement)
+  const searchInput = document.getElementById('search');
+  const userTableBody = document.getElementById('users-table-body');
+  const roleSelect = document.getElementById('role');
+  const statusSelect = document.getElementById('status');
+
+  if (searchInput && userTableBody) {
+    let debounceTimer = null;
+
+    const performAjaxSearch = () => {
+      const q = searchInput.value.trim();
+      const role = roleSelect ? roleSelect.value : '';
+      const status = statusSelect ? statusSelect.value : '';
+
+      // Build dynamic endpoint path
+      const currentUrl = new URL(window.location.href);
+      const searchEndpoint = currentUrl.pathname.replace(/\/users\.php$/, '/search-users.php');
+      const params = new URLSearchParams({ q, role, status });
+
+      fetch(`${searchEndpoint}?${params.toString()}`)
+        .then((res) => {
+          if (!res.ok) throw new Error('Search network error');
+          return res.json();
+        })
+        .then((data) => {
+          if (!data || !data.success) return;
+          if (data.users.length === 0) {
+            userTableBody.innerHTML = `
+              <tr>
+                <td colspan="7" class="text-center py-5 text-secondary">
+                  <i class="bi bi-inbox fs-1 d-block mb-2 text-muted"></i>
+                  No users found matching "${q.replace(/</g, '&lt;')}".
+                </td>
+              </tr>`;
+            return;
+          }
+
+          let html = '';
+          data.users.forEach((u) => {
+            const roleBadge = u.role === 'admin' ? 'warning text-dark' : 'info';
+            const statusBadge = u.status === 'active' ? 'success' : 'secondary';
+            const idStr = String(u.id).padStart(4, '0');
+
+            const actionButtons = u.is_self
+              ? `<a href="${u.edit_url}" class="btn btn-outline-primary btn-sm py-1 px-2" title="Edit User"><i class="bi bi-pencil-square"></i></a>
+                 <button class="btn btn-outline-secondary btn-sm py-1 px-2" disabled title="Cannot delete your active account"><i class="bi bi-lock"></i></button>`
+              : `<a href="${u.edit_url}" class="btn btn-outline-primary btn-sm py-1 px-2" title="Edit User"><i class="bi bi-pencil-square"></i></a>
+                 <form action="${u.delete_url}" method="POST" class="d-inline confirm-delete-form" data-user-name="${u.full_name}">
+                   <input type="hidden" name="csrf_token" value="${u.csrf_token}">
+                   <input type="hidden" name="id" value="${u.id}">
+                   <button type="submit" class="btn btn-outline-danger btn-sm py-1 px-2" title="Delete User"><i class="bi bi-trash"></i></button>
+                 </form>`;
+
+            html += `
+              <tr>
+                <td class="font-monospace text-secondary">#${idStr}</td>
+                <td>
+                  <div class="d-flex align-items-center gap-2">
+                    <img src="${u.profile_image_url}" alt="Avatar" class="rounded-circle" width="34" height="34" style="object-fit: cover;">
+                    <span class="fw-semibold text-light">${u.full_name}</span>
+                  </div>
+                </td>
+                <td class="font-monospace small text-secondary">${u.email}</td>
+                <td><span class="badge bg-${roleBadge}">${u.role.toUpperCase()}</span></td>
+                <td><span class="badge bg-${statusBadge}">${u.status.toUpperCase()}</span></td>
+                <td class="text-secondary small">${u.created_at}</td>
+                <td class="text-end"><div class="d-inline-flex align-items-center gap-1">${actionButtons}</div></td>
+              </tr>`;
+          });
+
+          userTableBody.innerHTML = html;
+
+          // Re-bind delete confirmation handlers to dynamically rendered forms
+          const newDeleteForms = userTableBody.querySelectorAll('.confirm-delete-form');
+          newDeleteForms.forEach((form) => {
+            form.addEventListener('submit', (e) => {
+              const name = form.getAttribute('data-user-name') || 'this user';
+              if (!window.confirm(`Are you sure you want to permanently delete "${name}"?\n\nThis action cannot be undone.`)) {
+                e.preventDefault();
+              }
+            });
+          });
+        })
+        .catch(() => {
+          // Graceful fallback: do nothing, allow user to submit form normally
+        });
+    };
+
+    searchInput.addEventListener('input', () => {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(performAjaxSearch, 300);
+    });
+
+    if (roleSelect) roleSelect.addEventListener('change', performAjaxSearch);
+    if (statusSelect) statusSelect.addEventListener('change', performAjaxSearch);
+  }
 });

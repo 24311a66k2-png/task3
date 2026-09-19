@@ -187,7 +187,7 @@ require_once __DIR__ . '/../includes/header.php';
             <th scope="col" class="text-end" style="width: 140px;">Actions</th>
           </tr>
         </thead>
-        <tbody>
+        <tbody id="users-table-body">
           <?php if (empty($users)): ?>
             <tr>
               <td colspan="7" class="text-center py-5 text-secondary">
