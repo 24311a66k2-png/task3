@@ -138,6 +138,7 @@ task3/
 │   ├── dashboard.php             # Admin interface: analytics & server metrics
 │   ├── delete-user.php           # POST handler: secure user deletion with self-guard
 │   ├── edit-user.php             # Admin interface: edit details, roles, and status
+│   ├── search-users.php          # AJAX JSON endpoint: live search & dynamic filtering
 │   └── users.php                 # Admin interface: user CRUD table, search, filters & pagination
 ├── assets/
 │   ├── css/
